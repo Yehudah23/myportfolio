@@ -43,6 +43,12 @@ export class Projects implements OnInit {
     document.addEventListener('darkModeChange', (e: any) => {
       this.isDarkMode = e.detail.isDarkMode;
     });
+    
+    // Listen for project updates from admin panel
+    window.addEventListener('projectsUpdated', () => {
+      console.log('Projects updated event received, reloading...');
+      this.loadProjects();
+    });
   }
   
   loadProjects(): void {

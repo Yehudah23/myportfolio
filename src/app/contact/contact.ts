@@ -27,8 +27,8 @@ export class Contact implements OnInit {
   isDarkMode = false;
   
   constructor(
-    private formBuilder: FormBuilder,
-    private apiService: ApiService
+    public formBuilder: FormBuilder,
+    public apiService: ApiService
   ) {}
   
   ngOnInit(): void {

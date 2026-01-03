@@ -169,6 +169,8 @@ export class AdminDashboard implements OnInit, OnDestroy {
         this.loadProjects();
         this.cancelForm();
         this.loading = false;
+        // Clear any cached projects data to force refresh on projects page
+        this.clearProjectsCache();
       },
       error: (error) => {
         alert('Error: ' + error.message);
@@ -186,12 +188,19 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.apiService.deleteProject(id).subscribe({
       next: () => {
         this.loadProjects();
+        // Clear any cached projects data to force refresh on projects page
+        this.clearProjectsCache();
       },
       error: (error) => {
         alert('Error: ' + error.message);
         this.loading = false;
       }
     });
+  }
+  
+  clearProjectsCache() {
+    // Dispatch a custom event to notify other components that projects have changed
+    window.dispatchEvent(new CustomEvent('projectsUpdated'));
   }
   
   logout() {

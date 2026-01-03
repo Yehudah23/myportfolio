@@ -6,7 +6,7 @@ import { catchError } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
 	public readonly http = inject(HttpClient);
-	public readonly baseUrl = 'http://localhost/myportfolio';
+	public readonly baseUrl = '/api';
 
 	/**
 	 * Submit contact form

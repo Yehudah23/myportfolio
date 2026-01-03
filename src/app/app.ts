@@ -119,14 +119,14 @@ export class App implements OnInit {
     // Add preloader to body
     document.body.appendChild(preloader);
     
-    // Remove preloader after page load
+    // Remove preloader after page load (reduced delay for faster UX)
     window.addEventListener('load', () => {
       setTimeout(() => {
         preloader.classList.add('fade-out');
         setTimeout(() => {
           preloader.remove();
-        }, 500);
-      }, 500);
+        }, 300);
+      }, 100);
     });
   }
 }

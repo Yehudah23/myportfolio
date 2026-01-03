@@ -58,8 +58,6 @@ export class Skills implements OnInit {
       skills: [
         { name: 'Git', level: 'Expert' },
         { name: 'Docker', level: 'Intermediate' },
-    
-        { name: 'AWS', level: 'Beginner' },
        
       ]
     }
