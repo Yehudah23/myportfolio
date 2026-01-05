@@ -4,7 +4,7 @@ import { App } from './app/app';
 
 // Import Bootstrap CSS
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
+// Bootstrap icons imported in angular.json
 // Import AOS styles
 import 'aos/dist/aos.css';
 
