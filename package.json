@@ -45,5 +45,10 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.8.2"
+  },
+  "overrides": {
+    "rimraf": "^6.0.0",
+    "glob": "^11.0.0",
+    "inflight": "npm:@npmcli/fs@^4.0.0"
   }
 }
