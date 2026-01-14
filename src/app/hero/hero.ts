@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, AfterViewInit, ElementRef } from '@angular/core';
+import { Skills } from '../skills/skills';
+import { Projects } from '../projects/projects';
+import { About } from '../about/about';
 
 @Component({
   standalone: true,
   selector: 'app-hero',
-  imports: [CommonModule],
+  imports: [CommonModule, Skills, Projects, About],
   templateUrl: './hero.html',
   styleUrls: ['./hero.css']
 })

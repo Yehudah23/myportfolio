@@ -1,0 +1,82 @@
+/* Projects Component Styles */
+
+/* Project card styles */
+.project-card {
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.project-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.project-image-container {
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.project-image-container img {
+  transition: transform 0.3s ease;
+}
+
+.project-card:hover .project-image-container img {
+  transform: scale(1.05);
+}
+
+.project-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.project-card:hover .project-overlay {
+  opacity: 1;
+}
+
+/* Filter buttons */
+.btn-group .btn {
+  transition: all 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .project-card {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  /* Make filter buttons wrap nicely */
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .btn-group .btn {
+    flex: 0 1 auto;
+    font-size: 0.85rem;
+  }
+  
+  /* Ensure cards are visible */
+  .col {
+    margin-bottom: 1rem;
+  }
+  
+  /* Show overlay on mobile by default (since hover doesn't work well) */
+  .project-overlay {
+    opacity: 0.9;
+  }
+  
+  /* Make project images more compact on small screens */
+  .project-image-container {
+    min-height: 150px;
+  }
+}

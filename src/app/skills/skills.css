@@ -1,0 +1,66 @@
+/* Skills Component Styles */
+
+/* Skill cloud animations */
+.skill-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.skill-tag {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: fadeInTag 0.5s forwards;
+}
+
+@keyframes fadeInTag {
+  to {
+    opacity: 1;
+  }
+}
+
+.skill-tag:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Skill progress container */
+.skill-progress-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .skill-cloud {
+    padding: 15px;
+  }
+  
+  .skill-tag {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .skill-cloud {
+    padding: 10px;
+    gap: 8px;
+  }
+  
+  .skill-tag {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .skill-progress-container {
+    max-height: 300px;
+  }
+}
