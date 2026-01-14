@@ -1,10 +1,10 @@
-<section id="skills" class="py-5" [ngClass]="{'bg-white': !isDarkMode, 'bg-dark text-light': isDarkMode}">
+<section id="skills" class="py-5 text-light" style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);">
   <div class="container">
     <div class="text-center mb-5" data-aos="fade-up">
       <h2 class="display-5 fw-bold">Technical Skills</h2>
       <div class="row justify-content-center">
         <div class="col-lg-8">
-          <p class="lead" [ngClass]="{'text-muted': !isDarkMode, 'text-light opacity-75': isDarkMode}">
+          <p class="lead text-light opacity-75">
             An overview of my technical expertise and proficiency levels.
           </p>
         </div>
@@ -30,15 +30,15 @@
       <div class="tab-pane fade show active">
         <div class="row g-4">
           <div class="col-lg-6" data-aos="fade-right" data-aos-delay="300">
-            <div class="p-4 rounded-3 shadow-sm" [ngClass]="{'bg-light': !isDarkMode, 'bg-dark-subtle': isDarkMode}">
+            <div class="skill-card">
               <div class="d-flex align-items-center mb-4">
                 <div class="bg-primary rounded-circle p-3 text-white me-3">
                   <i class="bi" [ngClass]="getIconForCategory(activeCategory?.category || '')"></i>
                 </div>
-                <h3 class="mb-0">{{ activeCategory?.category }}</h3>
+                <h3 class="mb-0 text-light">{{ activeCategory?.category }}</h3>
               </div>
               
-              <p class="mb-4" [ngClass]="{'text-muted': !isDarkMode, 'text-light opacity-75': isDarkMode}">
+              <p class="mb-4 text-light opacity-75">
                 {{ activeCategory?.description }}
               </p>
               
@@ -67,12 +67,10 @@
           </div>
           
           <div class="col-lg-6" data-aos="fade-left" data-aos-delay="400">
-            <div class="p-4 rounded-3 shadow-sm h-100 d-flex flex-column justify-content-center" 
-                 [ngClass]="{'bg-light': !isDarkMode, 'bg-dark-subtle': isDarkMode}">
+            <div class="skill-card h-100 d-flex flex-column justify-content-center">
               <div class="skill-cloud">
                 <div *ngFor="let skill of getAllSkills(); let i = index" 
-                     class="skill-tag" 
-                     [ngClass]="getSkillTagClass(skill.level)"
+                     class="skill-tag"
                      [style.animation-delay.ms]="i * 100">
                   {{ skill.name }}
                 </div>

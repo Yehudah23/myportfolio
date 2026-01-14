@@ -12,8 +12,8 @@
         <div class="mb-5" data-aos="fade-down" data-aos-duration="800">
           <div 
             class="mx-auto rounded-circle d-flex align-items-center justify-content-center overflow-hidden border border-4 border-primary shadow-lg profile-image-container" 
-            style="width: 180px; height: 180px; transition: all 0.3s ease;">
-            <img *ngIf="imageUrl; else initial" [src]="imageUrl" [alt]="name" class="w-100 h-100" style="object-fit: contain; padding: 5px;">
+            style="width: 200px; height: 200px; transition: all 0.3s ease;">
+            <img *ngIf="imageUrl; else initial" [src]="imageUrl" [alt]="name" style="max-width: 100%; max-height: 100%; object-fit: contain;">
             <ng-template #initial>
               <span class="display-1 fw-bold text-primary">{{ nameInitial }}</span>
             </ng-template>
@@ -42,8 +42,8 @@
             
             @media (max-width: 768px) {
               .profile-image-container {
-                width: 150px !important;
-                height: 150px !important;
+                width: 200px !important;
+                height: 200px !important;
               }
             }
           </style>
