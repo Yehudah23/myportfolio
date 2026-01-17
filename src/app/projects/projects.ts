@@ -53,19 +53,14 @@ export class Projects implements OnInit {
   
   loadProjects(): void {
     this.loading = true;
-    console.log('Loading projects from API...');
     this.apiService.getProjects().subscribe({
       next: (response) => {
-        console.log('Projects loaded successfully:', response);
         this.projects = response.data || [];
         this.filterProjects();
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error loading projects:', error);
-        // Fallback to default projects if API fails
-        this.projects = this.getDefaultProjects();
-        this.filterProjects();
+      error: () => {
+        this.projects = [];
         this.loading = false;
       }
     });

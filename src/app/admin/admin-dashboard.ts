@@ -38,17 +38,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   
   ngOnInit() {
     this.checkAuth();
-    // show cached projects immediately if available to improve perceived load time
-    try {
-      const raw = localStorage.getItem('admin_projects_cache');
-      if (raw) {
-        this.projects = JSON.parse(raw) || [];
-      }
-    } catch (e) {
-      // ignore parse errors
-    }
-
-    // Always fetch fresh data in the background and update the cache
+    // Load projects from database
     this.loadProjects();
     
     // Ensure we log out server-side when the admin refreshes or closes the page
@@ -90,17 +80,17 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
   
   loadProjects() {
+    console.log('Loading projects from API...');
     this.loading = true;
     this.apiService.getProjects().subscribe({
       next: (response) => {
+        console.log('Projects loaded:', response.data);
         this.projects = response.data || [];
-        // cache for next visit (small, so safe in localStorage)
-        try {
-          localStorage.setItem('admin_projects_cache', JSON.stringify(this.projects));
-        } catch (e) {}
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Failed to load projects:', err);
+        alert('❌ Failed to load projects. Please check your connection.');
         this.loading = false;
       }
     });
@@ -158,6 +148,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
       return;
     }
     
+    console.log('Saving project:', this.editMode ? 'UPDATE' : 'CREATE', this.currentProject);
     this.loading = true;
     
     const observable = this.editMode
@@ -165,16 +156,18 @@ export class AdminDashboard implements OnInit, OnDestroy {
       : this.apiService.createProject(this.currentProject);
     
     observable.subscribe({
-      next: () => {
-        this.loadProjects();
-        this.cancelForm();
+      next: (response) => {
+        console.log('Save successful:', response);
         this.loading = false;
-        // Clear any cached projects data to force refresh on projects page
+        this.cancelForm();
+        this.loadProjects();
         this.clearProjectsCache();
+        alert(this.editMode ? '✅ Project updated successfully!' : '✅ Project created successfully!');
       },
       error: (error) => {
-        alert('Error: ' + error.message);
+        console.error('Save failed:', error);
         this.loading = false;
+        alert('❌ Error: ' + error.message);
       }
     });
   }
@@ -188,12 +181,12 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.apiService.deleteProject(id).subscribe({
       next: () => {
         this.loadProjects();
-        // Clear any cached projects data to force refresh on projects page
         this.clearProjectsCache();
+        alert('Project deleted successfully!');
       },
       error: (error) => {
-        alert('Error: ' + error.message);
         this.loading = false;
+        alert('Error: ' + error.message);
       }
     });
   }

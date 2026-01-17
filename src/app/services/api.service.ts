@@ -109,6 +109,24 @@ export class ApiService {
 	}
 
 	/**
+	 * Get user preferences from database
+	 */
+	getUserPreferences(): Observable<any> {
+		return this.http.get(`${this.baseUrl}/preferences.php`, { withCredentials: true }).pipe(
+			catchError(this.handleError)
+		);
+	}
+
+	/**
+	 * Update user preferences in database
+	 */
+	updateUserPreferences(preferences: { darkMode: boolean }): Observable<any> {
+		return this.http.post(`${this.baseUrl}/preferences.php`, preferences, { withCredentials: true }).pipe(
+			catchError(this.handleError)
+		);
+	}
+
+	/**
 	 * Handle HTTP errors
 	 */
 	private handleError(error: HttpErrorResponse) {

@@ -1,6 +1,7 @@
 import { Component, OnInit, HostListener, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ApiService } from '../services/api.service';
 
 @Component({
   standalone: true,
@@ -11,6 +12,7 @@ import { RouterModule } from '@angular/router';
 })
 export class Header implements OnInit {
   private platformId = inject(PLATFORM_ID);
+  private apiService = inject(ApiService);
   darkMode = false;
   isScrolled = false;
   isMenuOpen = false;
@@ -18,21 +20,29 @@ export class Header implements OnInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     
-    // Check if user has a dark mode preference
-    const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const savedDarkMode = localStorage.getItem('darkMode');
-    
-    // Set dark mode based on saved preference or system preference
-    if (savedDarkMode !== null) {
-      this.darkMode = savedDarkMode === 'true';
-    } else {
-      this.darkMode = prefersDarkMode;
-    }
-    
-    // Apply dark mode if needed
-    if (this.darkMode) {
-      this.applyDarkMode();
-    }
+    // Load dark mode preference from database
+    this.loadPreferences();
+  }
+
+  private loadPreferences(): void {
+    this.apiService.getUserPreferences().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.darkMode = response.data.darkMode;
+          if (this.darkMode) {
+            this.applyDarkMode();
+          }
+        }
+      },
+      error: () => {
+        // Fallback to system preference if API fails
+        const prefersDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.darkMode = prefersDarkMode;
+        if (this.darkMode) {
+          this.applyDarkMode();
+        }
+      }
+    });
   }
 
   @HostListener('window:scroll', [])
@@ -46,8 +56,15 @@ export class Header implements OnInit {
     
     this.darkMode = !this.darkMode;
     
-    // Save preference to localStorage
-    localStorage.setItem('darkMode', this.darkMode.toString());
+    // Save preference to database
+    this.apiService.updateUserPreferences({ darkMode: this.darkMode }).subscribe({
+      next: () => {
+        // Preference saved successfully
+      },
+      error: (err) => {
+        console.error('Failed to save dark mode preference:', err);
+      }
+    });
     
     if (this.darkMode) {
       this.applyDarkMode();

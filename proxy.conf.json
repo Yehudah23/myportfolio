@@ -3,7 +3,7 @@
   		"target": "http://localhost/myportfolio/php",
   		"secure": false,
   		"changeOrigin": true,
-  		"logLevel": "info",
+  		"logLevel": "debug",
   		"pathRewrite": {
   			"^/api": ""
   		}

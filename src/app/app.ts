@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Header } from './header/header';
 import { Footer } from './footer/footer';
+import { ApiService } from './services/api.service';
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { Footer } from './footer/footer';
 })
 export class App implements OnInit {
   private platformId = inject(PLATFORM_ID);
+  private apiService = inject(ApiService);
   protected title = 'Myportfolio';
   showBackToTop = false;
   isDarkMode = false;
@@ -26,7 +28,7 @@ export class App implements OnInit {
       // Add preloader
       this.setupPreloader();
       
-      // Check for dark mode
+      // Check for dark mode from database
       this.checkDarkMode();
       
       // Listen for dark mode changes
@@ -39,15 +41,19 @@ export class App implements OnInit {
   public checkDarkMode(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     
-    // Check if dark mode is enabled in localStorage
-    const savedDarkMode = localStorage.getItem('darkMode');
-    if (savedDarkMode === 'true') {
-      this.isDarkMode = true;
-    } else if (savedDarkMode === null) {
-      // Check system preference if not set in localStorage
-      const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      this.isDarkMode = prefersDarkMode;
-    }
+    // Load dark mode preference from database
+    this.apiService.getUserPreferences().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.isDarkMode = response.data.darkMode;
+        }
+      },
+      error: () => {
+        // Fallback to system preference if API fails
+        const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        this.isDarkMode = prefersDarkMode;
+      }
+    });
   }
   
   @HostListener('window:scroll', [])
