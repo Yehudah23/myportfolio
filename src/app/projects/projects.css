@@ -129,24 +129,42 @@
     padding: 0.4rem 1rem;
   }
   
-  /* Ensure cards are visible */
+  /* Ensure cards are visible and properly spaced */
   .col {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
   
-  /* Show overlay buttons on mobile tap */
+  /* Always show overlay buttons on mobile - no hover needed */
   .project-overlay {
-    opacity: 0;
-  }
-  
-  .project-card:active .project-overlay {
     opacity: 1;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.85) 100%);
   }
   
-  /* Make project images more compact on small screens */
+  /* Make project images responsive */
   .project-image-container {
-    height: 180px;
+    height: 200px;
   }
+  
+  /* Card body padding adjustment */
+  .project-card .card-body {
+    padding: 1.25rem;
+  }
+  
+  /* Adjust title size */
+  .project-card .card-title {
+    font-size: 1.1rem;
+  }
+  
+  /* Make action buttons full width on mobile */
+  .project-card .d-flex.gap-2 {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+  
+  .project-card .d-flex.gap-2 .btn {
+    width: 100%;
+  }
+}
   
   .project-card .card-body {
     padding: 1.25rem;

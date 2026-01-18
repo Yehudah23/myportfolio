@@ -35,7 +35,7 @@
       </div>
     </div>
     
-    <div *ngIf="!loading" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <div *ngIf="!loading" class="row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3 g-3 g-md-4">
    <div *ngFor="let project of filteredProjects; let i = index" class="col" 
      data-aos="fade-up" 
      [attr.data-aos-delay]="getAosDelay(i)">
