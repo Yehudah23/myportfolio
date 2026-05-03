@@ -1,9 +1,9 @@
 <?php
-// Database Configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'my-portfolio');
+// Database Configuration - support environment variables for Docker/Render deployment
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
+define('DB_NAME', getenv('DB_NAME') ?: 'my-portfolio');
 
 // Email Configuration
 define('CONTACT_EMAIL', 'your-email@example.com');
@@ -15,7 +15,8 @@ define('RATE_LIMIT_REQUESTS', 5);
 define('RATE_LIMIT_PERIOD', 3600); // 1 hour in seconds
 
 // CORS Configuration
-define('ALLOWED_ORIGINS', ['http://localhost:4200', 'http://localhost:8000']);
+$allowedOrigins = getenv('ALLOWED_ORIGINS') ?: 'http://localhost:4200,http://localhost:8000';
+define('ALLOWED_ORIGINS', array_map('trim', explode(',', $allowedOrigins)));
 
 // Enable error reporting for development
 error_reporting(E_ALL);
