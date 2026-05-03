@@ -1,12 +1,15 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
 	public readonly http = inject(HttpClient);
+	private readonly platformId = inject(PLATFORM_ID);
 	public readonly baseUrl = '/api';
+	private readonly projectsCacheKey = 'portfolio.projects.cache.v1';
 
 	/**
 	 * Submit contact form
@@ -34,10 +37,72 @@ export class ApiService {
 	/**
 	 * Get projects from API
 	 */
-	getProjects(): Observable<any> {
-		return this.http.get(`${this.baseUrl}/projects.php`).pipe(
+	getProjects(bypassCache: boolean = false): Observable<any> {
+		// Check cache first to speed up page loads
+		if (!bypassCache) {
+			const cached = this.getProjectsCache();
+			if (cached.length > 0) {
+				// Return cached data immediately
+				return new Observable(observer => {
+					observer.next({ data: cached, cached: true });
+					observer.complete();
+				});
+			}
+		}
+
+		// Fetch from API if no cache or bypass requested
+		// Use standard Cache-Control to allow browser caching for 1 hour
+		return this.http.get(`${this.baseUrl}/projects.php`, {
+			headers: {
+				'Cache-Control': 'max-age=3600'
+			}
+		}).pipe(
+			tap((response: any) => {
+				const data = Array.isArray(response?.data) ? response.data : [];
+				if (data.length > 0) {
+					this.setProjectsCache(data);
+				}
+			}),
 			catchError(this.handleError)
 		);
+	}
+
+	setProjectsCache(projects: any[]): void {
+		if (!this.isBrowser()) {
+			return;
+		}
+
+		try {
+			window.localStorage.setItem(this.projectsCacheKey, JSON.stringify(projects));
+		} catch {
+			// Ignore storage errors (quota/private mode restrictions)
+		}
+	}
+
+	getProjectsCache(): any[] {
+		if (!this.isBrowser()) {
+			return [];
+		}
+
+		try {
+			const cached = window.localStorage.getItem(this.projectsCacheKey);
+			if (!cached) {
+				return [];
+			}
+
+			const parsed = JSON.parse(cached);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}
+
+	clearProjectsCache(): void {
+		if (!this.isBrowser()) {
+			return;
+		}
+
+		window.localStorage.removeItem(this.projectsCacheKey);
 	}
 
 	/**
@@ -136,7 +201,13 @@ export class ApiService {
 			// Client-side error
 			errorMessage = `Error: ${error.error.message}`;
 		} else {
-		
+			if (typeof error.error === 'string') {
+				if (error.error.includes('Data too long for column') && error.error.includes("'image'")) {
+					errorMessage = 'Image data is too large for backend storage. Choose a smaller image or increase the database image column size.';
+				} else {
+					errorMessage = `Server Error: ${error.status}`;
+				}
+			} else {
 			if (error.error && error.error.error) {
 				errorMessage = error.error.error;
 			} else if (error.error && error.error.errors) {
@@ -144,8 +215,13 @@ export class ApiService {
 			} else {
 				errorMessage = `Server Error: ${error.status} - ${error.message}`;
 			}
+			}
 		}
 		
 		return throwError(() => new Error(errorMessage));
+	}
+
+	private isBrowser(): boolean {
+		return isPlatformBrowser(this.platformId);
 	}
 } 

@@ -1,6 +1,6 @@
 {
   	"/api": {
-  		"target": "http://localhost/myportfolio/php",
+		"target": "http://localhost/myportfolio/php",
   		"secure": false,
   		"changeOrigin": true,
   		"logLevel": "debug",

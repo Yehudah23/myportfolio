@@ -55,15 +55,45 @@ export class Projects implements OnInit {
     this.loading = true;
     this.apiService.getProjects().subscribe({
       next: (response) => {
-        this.projects = response.data || [];
+        // Ensure technologies is always an array
+        const normalizedProjects = (response.data || []).map((project: any) => ({
+          ...project,
+          technologies: Array.isArray(project.technologies) 
+            ? project.technologies 
+            : (typeof project.technologies === 'string' 
+              ? (project.technologies ? project.technologies.split(',').map((t: string) => t.trim()) : [])
+              : [])
+        }));
+
+        this.projects = normalizedProjects.length > 0
+          ? normalizedProjects
+          : this.getBestAvailableProjects();
+
+        if (this.projects.length > 0) {
+          this.apiService.setProjectsCache(this.projects);
+        }
+
         this.filterProjects();
         this.loading = false;
       },
       error: () => {
-        this.projects = [];
+        // Use local cache first so the page still loads without backend.
+        this.projects = this.getBestAvailableProjects();
+        this.filterProjects();
         this.loading = false;
       }
     });
+  }
+
+  private getBestAvailableProjects(): Project[] {
+    const cachedProjects = this.apiService.getProjectsCache();
+    if (cachedProjects.length > 0) {
+      return cachedProjects;
+    }
+
+    const defaults = this.getDefaultProjects();
+    this.apiService.setProjectsCache(defaults);
+    return defaults;
   }
   
   getDefaultProjects(): Project[] {
@@ -71,13 +101,35 @@ export class Projects implements OnInit {
       {
         id: 1,
         title: 'E-Commerce Platform',
-        description: 'A full-featured online store with product management, cart functionality, and secure checkout.',
-        image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        technologies: ['Angular', 'TypeScript', 'Node.js', 'MongoDB'],
+        description: 'A full-featured online shopping platform with payment integration.',
+        image: 'https://via.placeholder.com/400x300',
+        technologies: ['Angular', 'Node.js', 'MongoDB', 'Stripe'],
         category: 'Web App',
         featured: true,
-        githubUrl: 'https://github.com/kingjudah/ecommerce',
-        liveUrl: 'https://ecommerce-demo.kingjudah.com'
+        githubUrl: 'https://github.com/example/ecommerce',
+        liveUrl: 'https://example.com'
+      },
+      {
+        id: 2,
+        title: 'Task Management App',
+        description: 'A collaborative task management tool for teams.',
+        image: 'https://via.placeholder.com/400x300',
+        technologies: ['React', 'Firebase', 'Material-UI'],
+        category: 'Web App',
+        featured: true,
+        githubUrl: 'https://github.com/example/taskapp',
+        liveUrl: 'https://example.com'
+      },
+      {
+        id: 3,
+        title: 'Weather Dashboard',
+        description: 'Real-time weather information with interactive maps.',
+        image: 'https://via.placeholder.com/400x300',
+        technologies: ['Vue.js', 'OpenWeather API', 'Chart.js'],
+        category: 'Web App',
+        featured: false,
+        githubUrl: 'https://github.com/example/weather',
+        liveUrl: 'https://example.com'
       }
     ];
   }
@@ -91,12 +143,12 @@ export class Projects implements OnInit {
     if (this.activeFilter === 'all') {
       this.filteredProjects = this.showAllProjects 
         ? [...this.projects]
-        : this.projects.filter(project => project.featured);
+        : this.projects.slice(0, 6); // Show first 6 projects initially
     } else {
       const filtered = this.projects.filter(project => project.category === this.activeFilter);
       this.filteredProjects = this.showAllProjects 
         ? filtered
-        : filtered.filter(project => project.featured);
+        : filtered.slice(0, 6); // Show first 6 filtered projects initially
     }
   }
   

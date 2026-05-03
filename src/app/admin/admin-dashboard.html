@@ -52,9 +52,12 @@
             </div>
             
             <div class="col-md-6 mb-3">
-              <label class="form-label">Image URL</label>
-              <input type="url" class="form-control" [(ngModel)]="currentProject.image" name="image" placeholder="https://example.com/image.jpg">
-              <small class="text-muted">Use Unsplash or any public image URL</small>
+              <label class="form-label">Image File</label>
+              <input type="file" class="form-control" accept="image/*" (change)="onImageSelected($event)" name="image">
+              <small class="text-muted d-block">Upload a JPG, PNG, or WebP image</small>
+              <small class="text-muted" *ngIf="currentProject.image">
+                Current: <img [src]="currentProject.image" alt="preview" style="max-height: 80px; margin-top: 5px;">
+              </small>
             </div>
             
             <div class="col-md-6 mb-3">
@@ -141,7 +144,8 @@
                 </td>
                 <td><span class="badge bg-info">{{ project.category }}</span></td>
                 <td>
-                  <span *ngFor="let tech of project.technologies" class="badge bg-secondary me-1">{{ tech }}</span>
+                  <span *ngFor="let tech of project.technologies" class="badge bg-secondary me-1 mb-1">{{ tech }}</span>
+                  <small *ngIf="!project.technologies || project.technologies.length === 0" class="text-muted">No technologies</small>
                 </td>
                 <td>
                   <i class="bi" [ngClass]="project.featured ? 'bi-star-fill text-warning' : 'bi-star'"></i>
