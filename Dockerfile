@@ -1,8 +1,8 @@
 # Use official PHP image with Apache
 FROM php:8.2-apache
 
-# Install PHP extensions required for MySQL, JSON, and other operations
-RUN docker-php-ext-install mysqli pdo pdo_mysql json
+# Install PHP extensions required for MySQL (JSON is built-in for PHP 8.2+)
+RUN docker-php-ext-install mysqli pdo pdo_mysql
 
 # Enable Apache modules for rewriting and headers
 RUN a2enmod rewrite headers
