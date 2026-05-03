@@ -151,14 +151,26 @@ function parseMultipartBody($rawBody, $contentType) {
     return $result;
 }
 
-// Create mysqli connection with LAMPP socket
-$connection = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, null, '/opt/lampp/var/mysql/mysql.sock');
+// Create robust mysqli connection using env vars and TCP (host/port) for Render compatibility
+$host = getenv('DB_HOST') ?: 'localhost';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: '';
+$dbname = getenv('DB_NAME') ?: 'my-portfolio';
+$port = (int)(getenv('DB_PORT') ?: 3306);
 
-if ($connection->connect_error) {
-    die(json_encode(['status' => false, 'message' => 'Database connection failed: ' . $connection->connect_error]));
+$connection = null;
+try {
+    // Use TCP connection (host + port) instead of socket to avoid missing socket errors on Render
+    $connection = new mysqli($host, $user, $pass, $dbname, $port);
+    if ($connection->connect_errno) {
+        throw new Exception('Database connection failed: ' . $connection->connect_error);
+    }
+    $connection->set_charset('utf8mb4');
+} catch (Exception $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    sendJsonResponse(['status' => false, 'error' => 'Database connection error', 'detail' => $e->getMessage()], 500);
 }
-
-$connection->set_charset('utf8mb4');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
