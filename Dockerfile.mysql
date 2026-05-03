@@ -1,0 +1,7 @@
+# MySQL container for Render private service
+FROM mysql:8.0
+
+# Copy initial schema/data into MySQL init directory
+COPY database.sql /docker-entrypoint-initdb.d/init.sql
+
+EXPOSE 3306
