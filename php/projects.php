@@ -386,8 +386,32 @@ if($method == 'DELETE'){
         exit;
     }
 
+    // Log request details for debugging
     $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+    error_log("=== DELETE REQUEST ===");
+    error_log("Method: " . ($_SERVER['REQUEST_METHOD'] ?? ''));
+    error_log("Content-Type: $contentType");
+    error_log("Query string: " . ($_SERVER['QUERY_STRING'] ?? ''));
+    error_log("Raw input: " . $rawInput);
+
+    // Only attempt to decode JSON if there's a non-empty body
+    $input = [];
+    if (is_string($rawInput) && trim($rawInput) !== '') {
+        $decoded = json_decode($rawInput, true);
+        if (!is_array($decoded)) {
+            error_log("DELETE FAILED - Invalid JSON payload: " . json_last_error_msg());
+            $connection->close();
+            sendJsonResponse([
+                'status' => false,
+                'message' => 'Invalid JSON payload',
+                'debug' => json_last_error_msg()
+            ], 400);
+        }
+        $input = $decoded;
+    }
+
+    // Prefer id in query string, fallback to JSON body
     $id = (int)($_GET['id'] ?? ($input['id'] ?? 0));
 
     if ($id <= 0) {
