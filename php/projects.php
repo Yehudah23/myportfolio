@@ -12,6 +12,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
+function isMultipartRequest() {
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '';
+    return stripos($contentType, 'multipart/form-data') !== false;
+}
+
+function normalizeTechnologiesValue($value) {
+    if (is_array($value)) {
+        return json_encode($value);
+    }
+
+    if (is_string($value)) {
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return json_encode([]);
+        }
+
+        if ($trimmed[0] === '[') {
+            $decoded = json_decode($trimmed, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return json_encode(array_values($decoded));
+            }
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $trimmed))));
+        return json_encode($parts);
+    }
+
+    return json_encode([]);
+}
+
+function ensureProjectUploadDir() {
+    $dir = __DIR__ . '/../uploads/projects';
+    if (!is_dir($dir)) {
+        mkdir($dir, 0775, true);
+    }
+    return $dir;
+}
+
+function saveProjectImageFromFileArray(array $file) {
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        return null;
+    }
+
+    $originalName = $file['name'] ?? 'project-image';
+    $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+    if (!in_array($extension, $allowedExtensions, true)) {
+        $extension = 'png';
+    }
+
+    $fileName = uniqid('project_', true) . '.' . $extension;
+    $targetDir = ensureProjectUploadDir();
+    $targetPath = $targetDir . '/' . $fileName;
+
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        return null;
+    }
+
+    return 'uploads/projects/' . $fileName;
+}
+
+function parseMultipartBody($rawBody, $contentType) {
+    $result = ['fields' => [], 'files' => []];
+
+    if (!preg_match('/boundary=(.*)$/', $contentType, $matches)) {
+        return $result;
+    }
+
+    $boundary = trim($matches[1], '"');
+    $parts = preg_split('/-+' . preg_quote($boundary, '/') . '/', $rawBody);
+
+    foreach ($parts as $part) {
+        $part = trim($part);
+        if ($part === '' || $part === '--') {
+            continue;
+        }
+
+        $segments = preg_split("/\r\n\r\n/", $part, 2);
+        if (count($segments) !== 2) {
+            continue;
+        }
+
+        [$rawHeaders, $body] = $segments;
+        $body = preg_replace("/\r\n$/", '', $body);
+
+        $headers = explode("\r\n", $rawHeaders);
+        $fieldName = '';
+        $fileName = '';
+        $mimeType = 'application/octet-stream';
+
+        foreach ($headers as $header) {
+            if (stripos($header, 'Content-Disposition:') === 0) {
+                if (preg_match('/name="([^"]+)"/', $header, $nameMatch)) {
+                    $fieldName = $nameMatch[1];
+                }
+                if (preg_match('/filename="([^"]*)"/', $header, $fileMatch)) {
+                    $fileName = $fileMatch[1];
+                }
+            }
+
+            if (stripos($header, 'Content-Type:') === 0) {
+                $mimeType = trim(substr($header, strpos($header, ':') + 1));
+            }
+        }
+
+        if ($fieldName === '') {
+            continue;
+        }
+
+        if ($fileName !== '') {
+            $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            if (!in_array($extension, $allowedExtensions, true)) {
+                $extension = 'png';
+            }
+
+            $storedName = uniqid('project_', true) . '.' . $extension;
+            $targetDir = ensureProjectUploadDir();
+            $targetPath = $targetDir . '/' . $storedName;
+
+            if (file_put_contents($targetPath, $body) === false) {
+                return $result;
+            }
+
+            $result['files'][$fieldName] = [
+                'name' => $fileName,
+                'type' => $mimeType,
+                'path' => $targetPath,
+                'storedName' => $storedName,
+                'publicPath' => 'uploads/projects/' . $storedName
+            ];
+        } else {
+            $result['fields'][$fieldName] = $body;
+        }
+    }
+
+    return $result;
+}
+
 // Create mysqli connection with LAMPP socket
 $connection = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, null, '/opt/lampp/var/mysql/mysql.sock');
 
@@ -91,26 +230,37 @@ if($method == 'POST'){
         exit;
     }
 
-    $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
+    $requestData = [];
+    if (isMultipartRequest()) {
+        $requestData = $_POST;
+        if (isset($_FILES['image'])) {
+            $uploadedImage = saveProjectImageFromFileArray($_FILES['image']);
+            if ($uploadedImage) {
+                $requestData['image'] = $uploadedImage;
+            }
+        }
+    } else {
+        $rawInput = file_get_contents('php://input');
+        $requestData = json_decode($rawInput, true);
 
-    if (!is_array($input)) {
-        $connection->close();
-        sendJsonResponse([
-            'status' => false,
-            'message' => 'Invalid JSON payload',
-            'debug' => json_last_error_msg()
-        ], 400);
+        if (!is_array($requestData)) {
+            $connection->close();
+            sendJsonResponse([
+                'status' => false,
+                'message' => 'Invalid JSON payload',
+                'debug' => json_last_error_msg()
+            ], 400);
+        }
     }
 
-    $title = $connection->real_escape_string($input['title'] ?? '');
-    $description = $connection->real_escape_string($input['description'] ?? '');
-    $image = $connection->real_escape_string($input['image'] ?? '');
-    $technologies = json_encode($input['technologies'] ?? []);
-    $category = $connection->real_escape_string($input['category'] ?? '');
-    $featured = isset($input['featured']) ? (int)$input['featured'] : 0;
-    $githubUrl = $connection->real_escape_string($input['githubUrl'] ?? '');
-    $liveUrl = $connection->real_escape_string($input['liveUrl'] ?? '');
+    $title = $connection->real_escape_string($requestData['title'] ?? '');
+    $description = $connection->real_escape_string($requestData['description'] ?? '');
+    $image = $connection->real_escape_string($requestData['image'] ?? '');
+    $technologies = normalizeTechnologiesValue($requestData['technologies'] ?? []);
+    $category = $connection->real_escape_string($requestData['category'] ?? '');
+    $featured = isset($requestData['featured']) ? (int)$requestData['featured'] : 0;
+    $githubUrl = $connection->real_escape_string($requestData['githubUrl'] ?? '');
+    $liveUrl = $connection->real_escape_string($requestData['liveUrl'] ?? '');
     
     if(empty($title) || empty($description)){
         sendJsonResponse(['status' => false, 'message' => 'Title and description are required'], 400);
@@ -158,15 +308,27 @@ if($method == 'PUT'){
         exit;
     }
     
-    $id = (int)($input['id'] ?? 0);
-    $title = $connection->real_escape_string($input['title'] ?? '');
-    $description = $connection->real_escape_string($input['description'] ?? '');
-    $image = isset($input['image']) ? $connection->real_escape_string($input['image']) : '';
-    $technologies = json_encode($input['technologies'] ?? []);
-    $category = $connection->real_escape_string($input['category'] ?? '');
-    $featured = isset($input['featured']) ? (int)$input['featured'] : 0;
-    $githubUrl = $connection->real_escape_string($input['githubUrl'] ?? '');
-    $liveUrl = $connection->real_escape_string($input['liveUrl'] ?? '');
+    $requestData = [];
+    if (isMultipartRequest()) {
+        $requestData = parseMultipartBody($rawInput, $_SERVER['CONTENT_TYPE'] ?? '');
+        $requestData = array_merge($requestData['fields'], $requestData['files']);
+
+        if (isset($requestData['image']['publicPath'])) {
+            $requestData['image'] = $requestData['image']['publicPath'];
+        }
+    } else {
+        $requestData = $input;
+    }
+
+    $id = (int)($requestData['id'] ?? 0);
+    $title = $connection->real_escape_string($requestData['title'] ?? '');
+    $description = $connection->real_escape_string($requestData['description'] ?? '');
+    $image = $connection->real_escape_string($requestData['image'] ?? '');
+    $technologies = normalizeTechnologiesValue($requestData['technologies'] ?? []);
+    $category = $connection->real_escape_string($requestData['category'] ?? '');
+    $featured = isset($requestData['featured']) ? (int)$requestData['featured'] : 0;
+    $githubUrl = $connection->real_escape_string($requestData['githubUrl'] ?? '');
+    $liveUrl = $connection->real_escape_string($requestData['liveUrl'] ?? '');
     
     error_log("Processed - ID: $id, Image: $image (length: " . strlen($image) . ")");
     
@@ -200,7 +362,7 @@ if($method == 'PUT'){
             'message' => 'Project updated successfully',
             'debug' => [
                 'updatedImage' => $row['image'],
-                'sentImage' => $input['image'] ?? '',
+                'sentImage' => $requestData['image'] ?? '',
                 'affectedRows' => $connection->affected_rows,
                 'id' => $id
             ]
@@ -219,19 +381,28 @@ if($method == 'DELETE'){
     session_start();
     if(!(isset($_SESSION['loggedInUser']) && !empty($_SESSION['loggedInUser'])) && !(isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true)){
         error_log("UNAUTHORIZED - No session user or admin flag (DELETE)");
-        echo json_encode(['status' => false, 'message' => 'Unauthorized']);
+        sendJsonResponse(['status' => false, 'message' => 'Unauthorized'], 401);
         $connection->close();
         exit;
     }
-    
-    $id = (int)$_GET['id'];
+
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    $id = (int)($_GET['id'] ?? ($input['id'] ?? 0));
+
+    if ($id <= 0) {
+        error_log("DELETE FAILED - Missing or invalid project id. Raw input: " . $rawInput);
+        $connection->close();
+        sendJsonResponse(['status' => false, 'message' => 'Project id is required'], 400);
+    }
+
     $query = "DELETE FROM `projects` WHERE id=$id";
     $result = $connection->query($query);
     
     if($result){
-        echo json_encode(['status' => true, 'message' => 'Project deleted successfully']);
+        sendJsonResponse(['status' => true, 'message' => 'Project deleted successfully']);
     }else{
-        echo json_encode(['status' => false, 'message' => 'Error deleting project: ' . $connection->error]);
+        sendJsonResponse(['status' => false, 'message' => 'Error deleting project: ' . $connection->error], 500);
     }
     $connection->close();
     exit;
