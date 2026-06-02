@@ -1,10 +1,21 @@
 <?php
 // Database Configuration - support environment variables for Docker/Render deployment
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_NAME', getenv('DB_NAME') ?: 'my-portfolio');
-define('DB_PORT', (int)(getenv('DB_PORT') ?: 3306));
+function resolveEnvValue(array $keys, $default) {
+    foreach ($keys as $key) {
+        $value = getenv($key);
+        if ($value !== false && $value !== '') {
+            return $value;
+        }
+    }
+
+    return $default;
+}
+
+define('DB_HOST', resolveEnvValue(['DB_HOST', 'MYSQLHOST', 'MYSQL_HOST'], 'localhost'));
+define('DB_USER', resolveEnvValue(['DB_USER', 'MYSQLUSER', 'MYSQL_USER'], 'root'));
+define('DB_PASS', resolveEnvValue(['DB_PASS', 'MYSQLPASSWORD', 'MYSQL_PASSWORD'], ''));
+define('DB_NAME', resolveEnvValue(['DB_NAME', 'MYSQLDATABASE', 'MYSQL_DATABASE'], 'my-portfolio'));
+define('DB_PORT', (int)resolveEnvValue(['DB_PORT', 'MYSQLPORT', 'MYSQL_PORT'], 3306));
 
 // Email Configuration
 define('CONTACT_EMAIL', 'your-email@example.com');

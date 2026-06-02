@@ -151,17 +151,10 @@ function parseMultipartBody($rawBody, $contentType) {
     return $result;
 }
 
-// Create robust mysqli connection using env vars and TCP (host/port) for Render compatibility
-$host = getenv('DB_HOST') ?: 'localhost';
-$user = getenv('DB_USER') ?: 'root';
-$pass = getenv('DB_PASS') ?: '';
-$dbname = getenv('DB_NAME') ?: 'my-portfolio';
-$port = (int)(getenv('DB_PORT') ?: 3306);
-
 $connection = null;
 try {
     // Use TCP connection (host + port) instead of socket to avoid missing socket errors on Render
-    $connection = new mysqli($host, $user, $pass, $dbname, $port);
+    $connection = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
     if ($connection->connect_errno) {
         throw new Exception('Database connection failed: ' . $connection->connect_error);
     }
