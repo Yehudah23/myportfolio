@@ -26,13 +26,13 @@ This command will:
 - Expose the web app on `http://localhost`
 
 ### 3. Access Your Application
-- **Web App**: http://localhost
+- **Web App**: http://localhost/myportfolio/ (or whatever path you mapped in Apache)
 - **phpMyAdmin** (optional, add to docker-compose.yml): http://localhost:8081
 - **MySQL**: localhost:3306 (from host machine)
 
 ## Database Setup
 
-The `database.sql` file is automatically imported into MySQL when the container starts for the first time.
+The `database.sql` file is automatically imported into MySQL when the container starts for the first time. It now includes the exported local schema and data, including the default admin user and existing projects.
 
 **Default credentials:**
 - Username: `root`
@@ -110,6 +110,13 @@ docker exec -it myportfolio-web /bin/bash
          - DB_HOST=db
          - DB_USER=${DB_USER}
          - DB_PASS=${DB_PASS}
+   ```
+
+5. **Frontend requests:** make sure browser calls include credentials when using authenticated endpoints:
+   ```js
+   fetch('/myportfolio/php/preferences.php', {
+     credentials: 'include'
+   })
    ```
 
 ## Troubleshooting

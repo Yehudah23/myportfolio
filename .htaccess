@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Allow friendly local paths like /api/projects.php -> /php/projects.php
+RewriteRule ^api/(.*)$ php/$1 [L,QSA]
+
+# If someone hits the project root directly, serve the app entry point when present.
+DirectoryIndex index.php index.html

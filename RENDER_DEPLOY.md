@@ -31,6 +31,14 @@ After deployment starts, go to your web service settings:
 2. Render will auto-populate `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS` from the MySQL service
 3. No manual configuration needed if using render.yaml
 
+For authenticated browser requests from a separate frontend (like Vercel), the frontend must send cookies:
+
+```js
+fetch('https://myportfolio-amie.onrender.com/php/preferences.php', {
+   credentials: 'include'
+})
+```
+
 ### Step 4: Wait for Database Initialization
 1. The database service will start and auto-initialize with `database.sql`
 2. Check logs: **Logs** tab → Select **myportfolio-db**

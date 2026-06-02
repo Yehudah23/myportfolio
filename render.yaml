@@ -11,6 +11,11 @@ services:
           name: myportfolio-db
           type: pserv
           property: host
+      - key: DB_PORT
+        fromService:
+          name: myportfolio-db
+          type: pserv
+          property: port
       - key: DB_NAME
         value: my-portfolio
       - key: DB_USER

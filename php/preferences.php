@@ -27,7 +27,15 @@ if (!$db) {
 $userId = $_COOKIE['user_id'] ?? null;
 if (!$userId) {
     $userId = generateUserId();
-    setcookie('user_id', $userId, time() + (365 * 24 * 60 * 60), '/', '', false, true); // 1 year, httpOnly
+    // Set cookie with SameSite=None and Secure so cross-site frontends (Vercel) can send it
+    $cookieOptions = [
+        'expires' => time() + (365 * 24 * 60 * 60),
+        'path' => '/',
+        'secure' => true,
+        'httponly' => true,
+        'samesite' => 'None'
+    ];
+    setcookie('user_id', $userId, $cookieOptions);
 }
 
 // Route the request
