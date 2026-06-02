@@ -23,6 +23,16 @@ if (!$db) {
     sendJsonResponse(['error' => 'Database connection failed'], 500);
 }
 
+// Backfill the preferences table if the Render database was created before the latest seed.
+$db->exec("CREATE TABLE IF NOT EXISTS user_preferences (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL UNIQUE,
+    dark_mode TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
 // Get user ID from cookie or create new one
 $userId = $_COOKIE['user_id'] ?? null;
 if (!$userId) {

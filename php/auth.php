@@ -28,7 +28,7 @@ if ($method === 'POST' && $action === 'login') {
     // Simple authentication - username: admin, password: yehudah23
     if ($username === 'admin' && $password === 'yehudah23') {
         // Create session
-        session_start();
+        startSecureSession();
         $_SESSION['admin_logged_in'] = true;
         // Also set the legacy session key used by other endpoints
         $_SESSION['loggedInUser'] = $username;
@@ -49,13 +49,13 @@ if ($method === 'POST' && $action === 'login') {
 }
 
 if ($method === 'POST' && $action === 'logout') {
-    session_start();
+    startSecureSession();
     session_destroy();
     sendJsonResponse(['success' => true, 'message' => 'Logged out successfully']);
 }
 
 if ($method === 'GET' && $action === 'check') {
-    session_start();
+    startSecureSession();
     
     if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
         sendJsonResponse([

@@ -34,6 +34,24 @@ if (PHP_VERSION_ID >= 70300) {
     ini_set('session.cookie_samesite', 'None');
 }
 
+function startSecureSession() {
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+
+    if (!headers_sent() && PHP_VERSION_ID >= 70300) {
+        session_set_cookie_params([
+            'lifetime' => 0,
+            'path' => '/',
+            'secure' => true,
+            'httponly' => true,
+            'samesite' => 'None'
+        ]);
+    }
+
+    session_start();
+}
+
 // Create database connection function
 function getDBConnection() {
     try {

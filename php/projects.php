@@ -234,7 +234,7 @@ if($method == 'GET' && $action == 'single'){
 }
 
 if($method == 'POST'){
-    session_start();
+    startSecureSession();
     if(!(isset($_SESSION['loggedInUser']) && !empty($_SESSION['loggedInUser'])) && !(isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true)){
         error_log("UNAUTHORIZED - No session user or admin flag (POST)");
         sendJsonResponse(['status' => false, 'message' => 'Unauthorized'], 401);
@@ -292,7 +292,7 @@ if($method == 'POST'){
 
 if($method == 'PUT'){
     // Start session first
-    session_start();
+    startSecureSession();
     
     // Read the raw input
     $rawInput = file_get_contents('php://input');
@@ -390,7 +390,7 @@ if($method == 'PUT'){
 }
 
 if($method == 'DELETE'){
-    session_start();
+    startSecureSession();
     if(!(isset($_SESSION['loggedInUser']) && !empty($_SESSION['loggedInUser'])) && !(isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true)){
         error_log("UNAUTHORIZED - No session user or admin flag (DELETE)");
         sendJsonResponse(['status' => false, 'message' => 'Unauthorized'], 401);
