@@ -17,15 +17,47 @@ function sendJsonResponse($data, $statusCode = 200) {
  */
 function setCorsHeaders() {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    
-    if (in_array($origin, ALLOWED_ORIGINS)) {
-        header("Access-Control-Allow-Origin: $origin");
+
+    // Always vary by origin so caches treat responses correctly
+    header('Vary: Origin');
+
+    $allowed = false;
+    if ($origin) {
+        // Exact match against configured list
+        if (in_array($origin, ALLOWED_ORIGINS, true)) {
+            $allowed = true;
+        }
+
+        // Allow common hosting hostnames if ALLOWED_ORIGINS wasn't set for them
+        $host = parse_url($origin, PHP_URL_HOST) ?: '';
+        if (!$allowed && preg_match('/\\.vercel\\.app$/', $host)) {
+            $allowed = true;
+        }
+        if (!$allowed && preg_match('/\\.onrender\\.com$/', $host)) {
+            $allowed = true;
+        }
+        // Allow localhost origins used during dev
+        if (!$allowed && preg_match('/^(localhost|127\\.0\\.0\\.1)(:\\d+)?$/', $host)) {
+            $allowed = true;
+        }
+        // Allow wildcard entry
+        if (!$allowed && in_array('*', ALLOWED_ORIGINS, true)) {
+            $allowed = true;
+        }
     }
-    
-    header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, Authorization');
-    header('Access-Control-Max-Age: 86400');
+
+    if ($allowed && $origin) {
+        header("Access-Control-Allow-Origin: $origin");
+        header('Access-Control-Allow-Credentials: true');
+        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Max-Age: 86400');
+    } else {
+        // Log blocked CORS attempts for debugging in deployed envs
+        if ($origin) {
+            error_log('CORS blocked origin: ' . $origin . '; allowed: ' . json_encode(ALLOWED_ORIGINS));
+        }
+    }
 }
 
 /**
